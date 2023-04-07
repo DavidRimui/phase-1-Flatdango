@@ -1,53 +1,75 @@
 // Your code here
-const db = "http://localhost:3000/films"
 
-document.addEventListener("DOMContentLoaded", () => {
-    getMovies();
-    document.querySelector("#buy-ticket").addEventListener("click", handleBuyTicket);
-});
+//Global Variables used in different functions
+let availableTickets= 0; 
+let selected;
+ 
+//This function only retrives the first movie in the list to display on the doc.
+function retrieveFirstMovie(){             
 
-function getMovies() {
-    fetch(db)
-    .then(res => res.json())
-    .then(movies => {
-        movies.forEach(movie => {renderMovieList(movie)})
-        const firstMovie = document.querySelector("#id1");
-        firstMovie.dispatchEvent(new Event("click"));
+    fetch(" http://localhost:3000/films/1")
+    .then(resp => resp.json())
+    .then(data => displayMovie(data))
+}
+
+//This dunction retrives movie list and displays it on the document.
+function retrieveMovieList(){
+
+    fetch(" http://localhost:3000/films")
+    .then(resp => resp.json())
+    .then(data => displayList(data))
+}
+
+
+
+function displayMovie(movie){        //Passes text and image link to elements in the html programatically
+    availableTickets= movie.capacity-movie.tickets_sold;
+    document.querySelector("#poster").src=movie.poster;
+    document.querySelector("#title").innerText=movie.title;
+    document.querySelector("#runtime").innerText=movie.runtime;
+    document.querySelector("#showtime").innerText=movie.showtime;
+    document.querySelector("#film-info").innerText=movie.description;
+    document.querySelector('#ticket-num').innerText=availableTickets;
+}
+
+function displayList(movieList){         //Dispays list of movies with attached event listener
+    document.querySelector("#films li").remove();
+
+    movieList.forEach((movie)=>{
+        let newList=document.createElement("li");
+        newList.innerText=movie.title;
+        newList.className="film item";
+   //Adds event listener to node object before appending. This event listener allows us to switch movies and calls dispayMovie. 
+         newList.addEventListener('click',()=>{         
+            console.log("click");
+            selected=newList.innerText;
+            displayMovie(movie);
+        })
+        document.querySelector("#films").appendChild(newList);
+
     })
+    
 }
 
-function renderMovieList(movie) {
-    const li = document.createElement("li");
-    li.textContent = `${movie.title}`;
-    li.id = "id" + movie.id;
-    const ul = document.querySelector("#films");
-    ul.appendChild(li);
-    li.classList.add("film");
-    li.classList.add('item');
-    li.addEventListener("click", () => {handleMovieClick(movie)})
+
+//enables usage of the buyTicket button.
+function buyTicket(){  
+  button=document.querySelector("#buy-ticket");
+  button.addEventListener('click',()=>{
+    if(availableTickets>0){
+    availableTickets-=1
+    document.querySelector('#ticket-num').innerText=availableTickets;}
+    else(alert("No more tickets!"))
+});
+  
 }
 
-function handleMovieClick(movie) {
-    const poster = document.querySelector("img#poster")
-    poster.src = movie.poster;
-    poster.alt = movie.title;
-    const info = document.querySelector("#showing");
-    info.querySelector("#title").textContent = movie.title;
-    info.querySelector("#runtime").textContent = movie.runtime+" minutes";
-    info.querySelector("#film-info").textContent = movie.description;
-    info.querySelector("#showtime").textContent = movie.showtime;
-    info.querySelector("#ticket-num").textContent = movie.capacity - movie.tickets_sold + " remaining tickets";
-}
 
-function handleBuyTicket(e) {
-    const ticketDiv = document.querySelector("#ticket-num");
-    const tickets = ticketDiv.textContent.split(" ")[0];
-    if (tickets > 0) {
-        ticketDiv.textContent = tickets - 1 + " remaining tickets";
-    }
-    else if (tickets == 0) {
-        alert("No more tickets!");
-        e.target.classList.add("sold-out");
-        e.target.classList.remove("orange");
-    }
-}
+
+retrieveFirstMovie();
+retrieveMovieList();
+buyTicket();
+
+
+
+
